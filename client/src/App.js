@@ -5,7 +5,16 @@ import getWeb3 from "./getWeb3";
 import "./App.css";
 
 class App extends Component {
-  state = { web3: null, accounts: null, contract: null };
+  state = { level: 0, web3: null, accounts: null, contract: null };
+  
+  constructor(props) {
+    super(props)
+    this.handleLevelUp = this.handleLevelUp.bind(this);  
+  }
+
+  handleLevelUp() {
+    this.setState({ level: this.state.level + 1 });
+  }
 
   componentDidMount = async () => {
     try {
@@ -22,10 +31,31 @@ class App extends Component {
         ButtonContract.abi,
         deployedNetwork && deployedNetwork.address,
       );
+      
+      instance.methods.getOwnerHasMonster(accounts[0]).call().then(function(hasMonster) {
+        if (!hasMonster) {
+          instance.methods.createMonster("Harry").call().then(getMonsterIdByOwner(web3.eth.accounts[0])).then(displayMonster);
+        }
+        else {
+          getMonsterIdByOwner(web3.eth.accounts[0]).then(displayMonster);
+        }
+      });
 
-      // Set web3, accounts, and contract to the state, and then proceed with an
-      // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract: instance }, this.runExample);
+      function getMonsterIdByOwner(owner) {
+        return instance.methods.getOwnersMonsterId(owner).call()
+      }
+
+      function displayMonster(id) {
+        getMonsterById(id).then(function(monster) {
+          this.setState({ level: monster.level });
+        })
+      }
+
+      function getMonsterById(id) {
+        return instance.methods.monsters(id).call();
+      }
+
+      this.setState({ web3: web3, accounts, contract: instance });
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -40,16 +70,10 @@ class App extends Component {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
     return (
-      <div className="App">
-        <h1>Good to Go!</h1>
-        <p>Your Truffle Box is installed and ready.</p>
-        <h2>Smart Contract Example</h2>
-        <p>
-          Try changing the value stored on <strong>line 42</strong> of App.js.
-        </p>
-        <p>
-          Test! Hey this is David
-        </p>
+      <div className="App-header">
+        <h1>My First Solidity Dapp</h1>
+        <button onClick={this.handleLevelUp}>Level up</button>
+        <h2>Level: {this.state.level}</h2>
       </div>
     );
   }

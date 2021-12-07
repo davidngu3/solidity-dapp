@@ -1,6 +1,10 @@
 import React, { Component } from "react";
 import ButtonContract from "./contracts/Button.json";
 import getWeb3 from "./getWeb3";
+import Form1 from "./images/form1.png";
+import Form2 from "./images/form2.png";
+import Form3 from "./images/form3.png";
+import Form4 from "./images/form4.png";
 
 import "./App.css";
 
@@ -10,10 +14,35 @@ class App extends Component {
   constructor(props) {
     super(props)
     this.handleLevelUp = this.handleLevelUp.bind(this);  
+    this.renderMonster = this.renderMonster.bind(this);
   }
 
   handleLevelUp() {
     this.setState({ level: this.state.level + 1 });
+  }
+
+  renderMonster() {
+    const { level } = this.state;
+    if (level <= 5) {
+      return (
+        <img src={Form1} alt="weak monster" />
+      );
+    }
+    else if (level > 5 && level <= 10) {
+      return (
+        <img src={Form2} alt="semiweak monster"  />
+      );
+    }
+    else if (level > 10 && level <= 15) {
+      return (
+        <img src={Form3} alt="medium monster"  />
+      );
+    }
+    else if (level > 15) {
+      return (
+        <img src={Form4} alt="strong monster"  />
+      );
+    }
   }
 
   componentDidMount = async () => {
@@ -71,8 +100,11 @@ class App extends Component {
     }
     return (
       <div className="App-header">
-        <h1>My First Solidity Dapp</h1>
-        <button onClick={this.handleLevelUp}>Level up</button>
+        <h1>Degen App</h1>
+        <div className="monsterBox">
+          {this.renderMonster.call(this)}
+        </div>
+        <button class="button" onClick={this.handleLevelUp}>Level up</button>
         <h2>Level: {this.state.level}</h2>
       </div>
     );

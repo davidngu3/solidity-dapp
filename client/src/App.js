@@ -95,6 +95,7 @@ function App() {
     if (monster && contract) {
       function displayMonster() {
         getMonsterById(monster).then(function(monster) {
+          console.log(monster.level);
           setLevel(monster.level);
         })
       }

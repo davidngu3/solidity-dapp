@@ -14,13 +14,43 @@ function App() {
   const [accounts, setAccounts] = useState(null);
   const [contract, setContract] = useState(null);
 
-  function handleLevelUp() {
-    contract.methods.levelUp(monster).send({ from: accounts[0], gas: 100000 }).on("receipt", function(receipt) {
-      console.log(receipt);
-      retrieveMonsterStats();
-    })
-    .on("error", function(error) {
-      console.log(error);
+  function handleLevelUp1() {
+    setTimeout(() => {
+      contract.methods.levelUp(monster).send({ from: accounts[0], gas: 100000 }).on("receipt", function(receipt) {
+        console.log(receipt);
+        retrieveMonsterStats();
+      })
+      .on("error", function(error) {
+        console.log(error);
+      })
+    }, 2000)
+  }
+
+  function handleLevelUp2() {
+    setTimeout(() => {
+      contract.methods.levelUp(monster).send({ from: accounts[0], gas: 100000 }).on("receipt", function(receipt) {
+        console.log(receipt);
+      })
+      .on("error", function(error) {
+        console.log(error);
+      })
+      contract.methods.levelUp(monster).send({ from: accounts[0], gas: 100000 }).on("receipt", function(receipt) {
+        console.log(receipt);
+        retrieveMonsterStats();
+      })
+      .on("error", function(error) {
+        console.log(error);
+      })
+    }, 5000)
+  }
+
+  async function getMonsterById(id) {
+    return contract.methods.monsters(id).call();
+  }
+
+  function retrieveMonsterStats() {
+    getMonsterById(monster).then(function(monster) {
+      setLevel(monster.level);
     })
   }
 
@@ -93,25 +123,12 @@ function App() {
     }
   }, [web3, accounts, contract]);
 
-  async function getMonsterById(id) {
-    return contract.methods.monsters(id).call();
-  }
-
-  function retrieveMonsterStats() {
-    getMonsterById(monster).then(function(monster) {
-      setLevel(monster.level);
-    })
-  }
-
   useEffect(() => {
     if (monster && contract) {    
-      const load = async () => {
-        retrieveMonsterStats();
-      };
-
-      load();
+      retrieveMonsterStats();
     }
-  }, [monster, contract, retrieveMonsterStats]);
+    // eslint-disable-next-line
+  }, [monster, contract]);
 
   if (!web3) {
     return <div>Loading Web3, accounts, and contract...</div>;
@@ -123,7 +140,8 @@ function App() {
       <div className="monsterBox">
         <MonsterImage level={level}/>
       </div>  
-        <button className="button" onClick={handleLevelUp}>Level up</button> 
+        <button className="button" onClick={handleLevelUp1}>Level up (1)</button> 
+        <button className="button" onClick={handleLevelUp2}>Level up (2)</button> 
       <h2>Level: {level}</h2>
     </div>
   );
@@ -155,7 +173,8 @@ function MonsterImage(props) {
   }
   else {
     return null;
-  };  
+  };
+  
 }
 
 export default App;

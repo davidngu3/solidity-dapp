@@ -7,6 +7,7 @@ contract Button {
 
     /*
         Creates a new instance of a monster and records its owner
+        TESTED
     */
     function createMonster(string memory _name) public {
         Monster memory newMonster = Monster(_name, 0);
@@ -17,15 +18,18 @@ contract Button {
 
     /*
         Monster level up
+        TESTED
     */
     function levelUp(uint monsterId) external {
         monsters[monsterId].level++;
     }
 
+    // TESTED
     function getOwnerHasMonster(address owner) public view returns (bool) {
         return ownerHasMonster[owner];
     }
 
+    // TESTED  
     function getOwnersMonsterId(address owner) public view returns (uint) {
         return ownerToMonsterId[owner];
     }

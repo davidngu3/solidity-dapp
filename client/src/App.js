@@ -1,114 +1,154 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import ButtonContract from "./contracts/Button.json";
 import getWeb3 from "./getWeb3";
 import Form1 from "./images/form1.png";
 import Form2 from "./images/form2.png";
 import Form3 from "./images/form3.png";
 import Form4 from "./images/form4.png";
-
 import "./App.css";
 
-class App extends Component {
-  state = { level: 0, web3: null, accounts: null, contract: null };
-  
-  constructor(props) {
-    super(props)
-    this.handleLevelUp = this.handleLevelUp.bind(this);  
-    this.renderMonster = this.renderMonster.bind(this);
+function App() {
+  const [monster, setMonster] = useState(null);
+  const [level, setLevel] = useState(0);
+  const [web3, setWeb3] = useState(null);
+  const [accounts, setAccounts] = useState(null);
+  const [contract, setContract] = useState(null);
+  // const [buttonActive, setButtonActive] = useState(null);
+
+  // function toggleButtonActiveState() {
+  //   setButtonActive(!buttonActive);
+  // }
+
+  function handleLevelUp() {
+    contract.methods.levelUp(monster).send({ from: accounts[0], gas: 100000 }).on("receipt", function(receipt) {
+      // level up success
+      console.log(receipt);
+    })
+    .on("error", function(error) {
+      console.log(error);
+    })
   }
 
-  handleLevelUp() {
-    this.setState({ level: this.state.level + 1 });
-  }
+  // componentDidMount
+  useEffect(() => {
+    const init = async() => {
+      try {
+        // Get network provider and web3 instance.
+        const web3 = await getWeb3();
 
-  renderMonster() {
-    const { level } = this.state;
-    if (level <= 5) {
-      return (
-        <img src={Form1} alt="weak monster" />
-      );
-    }
-    else if (level > 5 && level <= 10) {
-      return (
-        <img src={Form2} alt="semiweak monster"  />
-      );
-    }
-    else if (level > 10 && level <= 15) {
-      return (
-        <img src={Form3} alt="medium monster"  />
-      );
-    }
-    else if (level > 15) {
-      return (
-        <img src={Form4} alt="strong monster"  />
-      );
-    }
-  }
+        // Use web3 to get the user's accounts.
+        const accounts = await web3.eth.getAccounts();
 
-  componentDidMount = async () => {
-    try {
-      // Get network provider and web3 instance.
-      const web3 = await getWeb3();
+        // Get the contract instance.
+        const networkId = await web3.eth.net.getId();
+        const deployedNetwork = ButtonContract.networks[networkId];
+        const contract = new web3.eth.Contract(
+          ButtonContract.abi,
+          deployedNetwork && deployedNetwork.address,
+        );
 
-      // Use web3 to get the user's accounts.
-      const accounts = await web3.eth.getAccounts();
+        setWeb3(web3);
+        setAccounts(accounts);
+        setContract(contract);
 
-      // Get the contract instance.
-      const networkId = await web3.eth.net.getId();
-      const deployedNetwork = ButtonContract.networks[networkId];
-      const instance = new web3.eth.Contract(
-        ButtonContract.abi,
-        deployedNetwork && deployedNetwork.address,
-      );
-      
-      instance.methods.getOwnerHasMonster(accounts[0]).call().then(function(hasMonster) {
-        if (!hasMonster) {
-          instance.methods.createMonster("Harry").call().then(getMonsterIdByOwner(web3.eth.accounts[0])).then(displayMonster);
-        }
-        else {
-          getMonsterIdByOwner(web3.eth.accounts[0]).then(displayMonster);
-        }
-      });
+      } catch (error) {
+        alert(
+          `Failed to load web3, accounts, or contract. Check console for details.`,
+        );
+        console.error(error);
+      }
+    };
+    init();
+  }, []);
 
+  useEffect(() => {
+    if (web3 && accounts && contract)  {
       function getMonsterIdByOwner(owner) {
-        return instance.methods.getOwnersMonsterId(owner).call()
+        return contract.methods.getOwnersMonsterId(owner).call()
       }
 
-      function displayMonster(id) {
-        getMonsterById(id).then(function(monster) {
-          this.setState({ level: monster.level });
+      const load = async () => {
+        // create monster, if none owned yet
+        contract.methods.getOwnerHasMonster(accounts[0]).call().then(function(hasMonster) {
+          if (!hasMonster) {
+            contract.methods.createMonster("Harry").send({ from: accounts[0], gas: 10000000 }).on("receipt", function(receipt) {
+              // transaction accepted
+              console.log("new monster created");
+              console.log(receipt);
+            })
+            .on("error", function(error) {
+              console.log(error);
+              // error creating monster
+            })
+          }
+          // store monster state
+          getMonsterIdByOwner(accounts[0]).then(function(monsterId) {
+            setMonster(monsterId);
+          })
+        });
+      }
+      load();
+    }
+  }, [web3, accounts, contract]);
+
+  useEffect(() => {
+    if (monster && contract) {
+      function displayMonster() {
+        getMonsterById(monster).then(function(monster) {
+          setLevel(monster.level);
         })
       }
 
       function getMonsterById(id) {
-        return instance.methods.monsters(id).call();
+        return contract.methods.monsters(id).call();
       }
 
-      this.setState({ web3: web3, accounts, contract: instance });
-    } catch (error) {
-      // Catch any errors for any of the above operations.
-      alert(
-        `Failed to load web3, accounts, or contract. Check console for details.`,
-      );
-      console.error(error);
-    }
-  };
+      const load = async () => {
+        displayMonster();
+      };
 
-  render() {
-    if (!this.state.web3) {
-      return <div>Loading Web3, accounts, and contract...</div>;
+      load();
     }
-    return (
-      <div className="App-header">
-        <h1>Degen App</h1>
-        <div className="monsterBox">
-          {this.renderMonster.call(this)}
-        </div>
-        <button class="button" onClick={this.handleLevelUp}>Level up</button>
-        <h2>Level: {this.state.level}</h2>
-      </div>
-    );
+  }, [monster, contract]);
+
+  if (!web3) {
+    return <div>Loading Web3, accounts, and contract...</div>;
   }
+  
+  return (
+    <div className="App-header">
+      <h1>Degen App</h1>
+      <div className="monsterBox">
+        <MonsterImage level={level}/>
+      </div>
+      <button className="button" onClick={() => handleLevelUp()}>Level up</button>
+      <h2>Level: {level}</h2>
+    </div>
+  );
+}
+
+function MonsterImage(props) {
+  const [image, setImage] = useState("");
+  const level = props.level;
+  
+  useEffect(() => {
+    if (level <= 5) {
+      setImage(Form1);
+    }
+    else if (level > 5 && level <= 10) {
+      setImage(Form2);
+    }
+    else if (level > 10 && level <= 15) {
+      setImage(Form3);
+    }
+    else if (level > 15) {
+      setImage(Form4);
+    }
+  }, [level]);
+
+  return (
+    <img src={image} alt="monster" />
+  );
 }
 
 export default App;

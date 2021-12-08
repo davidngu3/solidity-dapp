@@ -20,7 +20,7 @@ contract Button {
     /*
         Monster level up
     */
-    function levelUp(uint monsterId) private {
+    function levelUp(uint monsterId) public {
         monsters[monsterId].level++;
     }
 

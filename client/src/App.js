@@ -13,11 +13,6 @@ function App() {
   const [web3, setWeb3] = useState(null);
   const [accounts, setAccounts] = useState(null);
   const [contract, setContract] = useState(null);
-  // const [buttonActive, setButtonActive] = useState(null);
-
-  // function toggleButtonActiveState() {
-  //   setButtonActive(!buttonActive);
-  // }
 
   function handleLevelUp() {
     contract.methods.levelUp(monster).send({ from: accounts[0], gas: 100000 }).on("receipt", function(receipt) {

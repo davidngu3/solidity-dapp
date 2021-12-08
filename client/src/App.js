@@ -14,15 +14,15 @@ function App() {
   const [accounts, setAccounts] = useState(null);
   const [contract, setContract] = useState(null);
 
-  function handleLevelUp() {
-    contract.methods.levelUp(monster).send({ from: accounts[0], gas: 100000 }).on("receipt", function(receipt) {
-      // level up success
-      console.log(receipt);
-    })
-    .on("error", function(error) {
-      console.log(error);
-    })
-  }
+  // function handleLevelUp() {
+  //   contract.methods.levelUp(monster).send({ from: accounts[0], gas: 100000 }).on("receipt", function(receipt) {
+  //     // level up success
+  //     console.log(receipt);
+  //   })
+  //   .on("error", function(error) {
+  //     console.log(error);
+  //   })
+  // }
 
   // componentDidMount
   useEffect(() => {
@@ -62,24 +62,30 @@ function App() {
         return contract.methods.getOwnersMonsterId(owner).call()
       }
 
+      function retrieveMonster(owner) {
+        getMonsterIdByOwner(owner).then(function(monsterId) {
+          setMonster(monsterId);
+        });
+      }
+
       const load = async () => {
         // create monster, if none owned yet
         contract.methods.getOwnerHasMonster(accounts[0]).call().then(function(hasMonster) {
           if (!hasMonster) {
-            contract.methods.createMonster("Harry").send({ from: accounts[0], gas: 10000000 }).on("receipt", function(receipt) {
+            contract.methods.createMonster("Harry").send({ from: accounts[0] }).on("receipt", function(receipt) {
               // transaction accepted
               console.log("new monster created");
               console.log(receipt);
+              retrieveMonster(accounts[0]);
             })
             .on("error", function(error) {
               console.log(error);
               // error creating monster
             })
           }
-          // store monster state
-          getMonsterIdByOwner(accounts[0]).then(function(monsterId) {
-            setMonster(monsterId);
-          })
+          else {
+            retrieveMonster(accounts[0]);
+          }
         });
       }
       load();
@@ -88,19 +94,19 @@ function App() {
 
   useEffect(() => {
     if (monster && contract) {
-      function displayMonster() {
-        getMonsterById(monster).then(function(monster) {
-          console.log(monster.level);
-          setLevel(monster.level);
-        })
+      async function getMonsterById(id) {
+        const monster = await contract.methods.monsters(id).call();
+        return monster;
       }
 
-      function getMonsterById(id) {
-        return contract.methods.monsters(id).call();
-      }
-
+      // function displayMonster() {
+      //   getMonsterById(monster).then(function(monster) {
+      //     //setLevel(monster.level);
+      //   })
+      // }
+      
       const load = async () => {
-        displayMonster();
+        getMonsterById(monster);
       };
 
       load();
@@ -116,8 +122,8 @@ function App() {
       <h1>Degen App</h1>
       <div className="monsterBox">
         <MonsterImage level={level}/>
-      </div>
-      <button className="button" onClick={() => handleLevelUp()}>Level up</button>
+      </div>  
+        <button className="button">Level up</button> 
       <h2>Level: {level}</h2>
     </div>
   );

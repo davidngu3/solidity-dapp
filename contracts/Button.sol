@@ -5,7 +5,7 @@ contract Button {
     mapping (address => uint) public ownerToMonsterId; 
     mapping (address => bool) public ownerHasMonster;
 
-    function createMonster(string memory _name) external {
+    function createMonster(string calldata _name) external {
         Monster memory newMonster = Monster(_name, 0);
         monsters.push(newMonster);
         ownerHasMonster[msg.sender] = true;

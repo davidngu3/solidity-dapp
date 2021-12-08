@@ -1,36 +1,26 @@
 pragma solidity >=0.4.21 <0.7.0;
 
 contract Button {
-    Monster[] public monsters; // index is monsterid
-    mapping (address => uint) ownerToMonsterId; // owner can only own 1 monster
-    mapping (address => bool) ownerHasMonster;
+    Monster[] public monsters; 
+    mapping (address => uint) public ownerToMonsterId; 
+    mapping (address => bool) public ownerHasMonster;
 
-    /*
-        Creates a new instance of a monster and records its owner
-        TESTED
-    */
-    function createMonster(string memory _name) public {
+    function createMonster(string memory _name) external {
         Monster memory newMonster = Monster(_name, 0);
         monsters.push(newMonster);
         ownerHasMonster[msg.sender] = true;
         ownerToMonsterId[msg.sender] = monsters.length - 1;
     }
 
-    /*
-        Monster level up
-        TESTED
-    */
     function levelUp(uint monsterId) external {
         monsters[monsterId].level++;
     }
 
-    // TESTED
-    function getOwnerHasMonster(address owner) public view returns (bool) {
+    function getOwnerHasMonster(address owner) external view returns (bool) {
         return ownerHasMonster[owner];
     }
 
-    // TESTED  
-    function getOwnersMonsterId(address owner) public view returns (uint) {
+    function getOwnersMonsterId(address owner) external view returns (uint) {
         return ownerToMonsterId[owner];
     }
 
